@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rizzy Chat Room</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>
+                Rizzy Chat Room In Da Club
+            </h1>
+        </header>
+        <div id="input-block">
+            <h2>Enter your name</h2>
+            <input id="username" type="text" value="" placeholder="Enter your name..." style="margin-left: 1rem;" />
+        </div>
+        <div id="chat-box">
+            <div id="messages"></div>
+        </div>
+        <div id="input-block">
+            <textarea id="message" type="text" rows="1" value="" placeholder="Write your message..."></textarea>
+            <button id="sendButton">send</button>
+        </div>
+    </div>
+
+    <script>
+        var firstNames = [ "Emma", "Noah", "Olivia", "Liam", "Ava", "Sophia", "Mason", "Isabella", "Jacob", "Mia", "William", "Madison", "Ethan", "Elizabeth", "Michael", "Abigail", "Alexander", "Emily", "Jayden", "Charlotte", "Daniel", "Amelia", "Matthew", "Evelyn", "Aiden", "Abby", "Jackson", "Harper", "Logan", "Avery", "David", "Ella", "Anthony", "Aria", "Joshua", "Aaliyah", "Andrew", "Riley", "Luke", "Aubree", "Gabriel", "Brooklyn", "Samuel", "Lily", " Benjamin", "Natalie", "Joseph", "Sofia", "Christopher", "Makayla", "Nicholas", "Aurora", "Isaac", "Leah", "Ryan", "Allison", "Nathan", "Savannah", "Caleb", "Audrey", "Hunter", "Brooklynn", "Jack", "Bella", "Tyson", "Aurora", "Connor", "Anna", "Jeremiah", "Aubree", "Cameron", "Arianna", "Adrian", "Kaylee", "Colton", "Lillian", "Jordan", "Natalie", "Eli", "Isabelle", "Aaron", "Liliana", "Carson", "Evelyn", "Adam", "Hannah", "Landon", "Addison", "Nathaniel", "Avery", "Cole", "Eleanor", "Evan", "Allison", "Miles", "Makayla", "Dylan", "Aaliyah", "Cameron", "Aubree", "Brayden", "Brooklyn", "Jordan", "Bella", "Gavin", "Adriana"]
+
+        const ws = new WebSocket("ws://localhost:1234");
+        ws.onopen = () => {
+            console.log("Connected to server");
+        }
+        
+        ws.onmessage = (event) => {
+            console.log("Received message from server: " + event.data)
+            newMessage(JSON.parse(event.data).username, JSON.parse(event.data).message, false);
+        }
+
+        function newMessage(username, message, isOutgoing) {
+            const chat = document.getElementById("messages");
+            const div = document.createElement("div");
+
+            const usr = document.createElement("p");
+            usr.className = `message-username ${isOutgoing && "message-username-outgoing"}`;
+            usr.append(username);
+            
+            const bubble = document.createElement("div");
+            bubble.className = `message-bubble ${isOutgoing ? "message-bubble-outgoing" : "message-bubble-incoming"}`;
+            bubble.innerHTML = message;
+            
+            div.append(usr);
+            div.append(bubble);
+            chat.append(div);
+
+            const chatBox = document.getElementById("chat-box");
+            chatBox.scrollTo(0, chatBox.scrollHeight);
+        }
+
+        const sendButton = document.getElementById("sendButton");
+        const messageInput = document.getElementById("message"); 
+
+        const sendMessage = () => {
+            const username = document.getElementById("username").value;
+            const message = messageInput.value;
+            if(username === "") {
+                alert("Please enter a username");
+                return;
+            }
+            if (message !== "" && username !== "") {
+                newMessage(username, message, true);
+                ws.send(JSON.stringify({username: username, message: message}));
+            }
+
+            messageInput.value = "";
+        }
+        sendButton.addEventListener("click", event => {
+            sendMessage();
+        })
+
+        
+        $("#message").keydown(function(e){
+            // Enter was pressed without shift key
+            if (e.key == 'Enter' && !e.shiftKey)
+            {
+                console.log("Enter was pressed without shift key")
+                e.preventDefault();
+                sendMessage()
+            }
+        });
+
+        if(localStorage.getItem("username") !== null) {
+            document.getElementById("username").value = localStorage.getItem("username");
+        } else {
+            username = firstNames[Math.floor(Math.random() * firstNames.length)];
+            document.getElementById("username").value = username;
+            localStorage.setItem("username", username)
+        }
+
+        $('#username').keyup(() => {
+            localStorage.setItem("username", document.getElementById("username").value);
+        });
+        
+        newMessage("Demo", "Please enter your username and start chatting with your friends", false);
+        
+
+    </script>
+</body>
+
+</html>

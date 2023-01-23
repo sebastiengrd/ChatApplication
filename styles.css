@@ -1,0 +1,105 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0px;
+}
+
+header {
+    text-align: center;
+}
+
+#chat-box {
+    width: 100%;
+    max-height: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    padding-right: 1rem;
+}
+
+#input-block {
+    padding: 1.5rem 0px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+input, textarea {
+    width: 100%;
+    height: 19px;
+    resize: none;
+    font-family: Arial, Helvetica, sans-serif;
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 1.5rem;
+    border: none;
+    background-color: #F5F8FA;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0px 0px 0px 2px #1DA1F2;
+}
+
+button {
+    margin-left: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1.5rem;
+    border: none;
+    background-color: #1DA1F2;
+    color: white;
+    font-weight: bold;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    height: max-content;
+    transition: all 0.25s ease;
+}
+
+button:hover {
+    background-color: #4eaae3;
+    cursor: pointer;
+}
+
+.message-bubble {
+    border-radius: 1.5rem;
+    padding: 1rem 1.25rem;
+    width: max-content;
+}
+
+.message-username {
+    font-family: 'Courier New', Courier, monospace;
+    color: black;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    margin: 0.75rem 0.5rem 0.25rem 0.5rem;
+    font-weight: semi-bold;
+}
+
+.message-username-outgoing {
+    text-align: right;
+}
+
+.message-bubble-incoming {
+    background-color: #E1E8ED;
+    color: black;
+}
+
+.message-bubble-outgoing {
+    background-color: green;
+    color: white;
+    margin-left: auto;
+}
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    max-width: 600px;
+    margin: 0px auto;
+}
