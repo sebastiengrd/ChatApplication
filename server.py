@@ -37,8 +37,8 @@ class ClientMessageHandler:
             print(f'{self.client.username} is now talking to {data["to"]}')
         elif data.get("message") != None:
             print(f"Received message. Will send message to {self.client.to}" )
-            for cl in ClientMessageHandler.currentlyConnectedClients:
-                if (cl.username == self.client.to or self.client.to == "all" or self.client.to == "All" or self.client.to == None) and cl.username != self.client.username:
+            for cl in self.getOtherActiveClients():
+                if (cl.username == self.client.to or self.client.to == "all" or self.client.to == "All" or self.client.to == None):
                     if(cl.websocket.open):
                         await cl.websocket.send(json.dumps({"message": data["message"], "from": self.client.username}))
         elif data.get("getUsers") != None:
@@ -51,18 +51,17 @@ class ClientMessageHandler:
         oldUsername = self.client.username 
         self.client.username = username
         print(f'{oldUsername} is now {username}')
-        await self.sendUserUpdateToAllClients(self.client)
+        await self.sendUserUpdateToAllClients()
 
 
-    async def sendUserUpdateToAllClients(self, client):
-        for cl in ClientMessageHandler.currentlyConnectedClients:
-            if cl.username != client.username and cl.websocket.open:
-                await self.sendGetUserReply(cl.websocket, cl)
+    async def sendUserUpdateToAllClients(self):
+        for cl in self.getOtherActiveClients():
+            await self.sendGetUserReply(cl.websocket, cl)
 
     async def sendGetUserReply(self, websocket, currentClient):
         await websocket.send(json.dumps({"users": [cl.username for cl in ClientMessageHandler.currentlyConnectedClients if cl.username != None and cl.username != currentClient.username and cl.websocket.open]}))
 
-    async def getOtherClients(self):
+    def getOtherActiveClients(self):
         return [cl for cl in ClientMessageHandler.currentlyConnectedClients if cl.username != self.client.username and cl.websocket.open]
 
 async def chat_server(websocket, path):
