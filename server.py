@@ -1,20 +1,14 @@
 import asyncio
 import json
 import websockets
-
-class Client:
-    def __init__(self, websocket):
-        self.websocket = websocket
-        self.username = None
-        self.to = None
-
-
+from SocketClient import SocketClient
+from MessageFactory import MessageFactory
 class ClientMessageHandler:
     currentlyConnectedClients = set()
 
     def __init__(self, websocket):
         self.websocket = websocket
-        self.client = Client(websocket)
+        self.client = SocketClient(websocket)
         ClientMessageHandler.currentlyConnectedClients.add(self.client)
 
         
@@ -40,10 +34,10 @@ class ClientMessageHandler:
             for cl in self.getOtherActiveClients():
                 if (cl.username == self.client.to or self.client.to == "all" or self.client.to == "All" or self.client.to == None):
                     if(cl.websocket.open):
-                        await cl.websocket.send(json.dumps({"message": data["message"], "from": self.client.username}))
+                        message = MessageFactory.createMessageToClients(self.client.username, data["message"])
+                        await message.send(cl)
         elif data.get("getUsers") != None:
             await self.sendGetUserReply(self.websocket, self.client)
-            # await websocket.send(json.dumps({"users": [cl.username for cl in currentlyConnectedClients if cl.username != None and cl.username != client.username and cl.websocket.open]}))
         else:
             print("Invalid message")
 
