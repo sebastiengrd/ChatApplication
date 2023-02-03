@@ -15,33 +15,72 @@
                 Rizzy Chat Room In Da Club
             </h1>
         </header>
-        <div id="input-block">
-            <h2>Enter your name</h2>
-            <input id="username" type="text" value="" placeholder="Enter your name..." style="margin-left: 1rem;" />
+        <div style="display: flex; align-items: center; width: 100%; gap: 1rem;">
+            <h4 style="margin: 0; white-space: nowrap;">Enter your name</h4>
+            <input id="username" type="text" value="" placeholder="Enter your name..." />
         </div>
         <div id="chat-box">
             <div id="messages"></div>
         </div>
         <div id="input-block">
-            <textarea id="message" type="text" rows="1" value="" placeholder="Write your message..."></textarea>
-            <button id="sendButton">send</button>
+            <div style="display: flex; width: 100%; gap: 1rem; align-items: center;">
+                <h4 style="margin: 0;">Send to:</h4>
+                <select name="send-to" id="send-to">
+                    <option value="all" selected>All</option>
+                </select>
+            </div>
+            <div style="display: flex; margin-top: 1rem; width: 100%; gap: 1rem;">
+                <textarea id="message" type="text" rows="4" value="" placeholder="Write your message..."" style="height: 100px;"></textarea>
+                <button id="sendButton">send</button>
+            </div>
         </div>
     </div>
 
     <script>
         var firstNames = [ "Emma", "Noah", "Olivia", "Liam", "Ava", "Sophia", "Mason", "Isabella", "Jacob", "Mia", "William", "Madison", "Ethan", "Elizabeth", "Michael", "Abigail", "Alexander", "Emily", "Jayden", "Charlotte", "Daniel", "Amelia", "Matthew", "Evelyn", "Aiden", "Abby", "Jackson", "Harper", "Logan", "Avery", "David", "Ella", "Anthony", "Aria", "Joshua", "Aaliyah", "Andrew", "Riley", "Luke", "Aubree", "Gabriel", "Brooklyn", "Samuel", "Lily", " Benjamin", "Natalie", "Joseph", "Sofia", "Christopher", "Makayla", "Nicholas", "Aurora", "Isaac", "Leah", "Ryan", "Allison", "Nathan", "Savannah", "Caleb", "Audrey", "Hunter", "Brooklynn", "Jack", "Bella", "Tyson", "Aurora", "Connor", "Anna", "Jeremiah", "Aubree", "Cameron", "Arianna", "Adrian", "Kaylee", "Colton", "Lillian", "Jordan", "Natalie", "Eli", "Isabelle", "Aaron", "Liliana", "Carson", "Evelyn", "Adam", "Hannah", "Landon", "Addison", "Nathaniel", "Avery", "Cole", "Eleanor", "Evan", "Allison", "Miles", "Makayla", "Dylan", "Aaliyah", "Cameron", "Aubree", "Brayden", "Brooklyn", "Jordan", "Bella", "Gavin", "Adriana"]
 
+        if(localStorage.getItem("username") !== null) {
+            document.getElementById("username").value = localStorage.getItem("username");
+        } else {
+            username = firstNames[Math.floor(Math.random() * firstNames.length)];
+            document.getElementById("username").value = username;
+            localStorage.setItem("username", username)
+        }
+
+        const sendGetUserEventToWebsocket = () => {
+            ws.send(JSON.stringify({"getUsers": "true"}));
+            console.log("Getting Users...");
+        }
+
         const ws = new WebSocket("ws://localhost:1234");
+        
         ws.onopen = () => {
             console.log("Connected to server");
+            sendUsernameToWebsocket()
+            sendGetUserEventToWebsocket()
+
         }
         
         ws.onmessage = (event) => {
             console.log("Received message from server: " + event.data)
-            newMessage(JSON.parse(event.data).username, JSON.parse(event.data).message, false);
+            if(JSON.parse(event.data).users !== undefined) {
+                const users = JSON.parse(event.data).users;
+                console.log(users);
+                const select = document.getElementById("send-to");
+                select.innerHTML = "";
+                ["All", ...users].forEach(user => {
+                    const option = document.createElement("option");
+                    option.value = user;
+                    option.innerHTML = user;
+                    select.append(option);
+                })
+            }
+
+            else if(JSON.parse(event.data).from !== undefined && JSON.parse(event.data).message !== undefined)
+                newMessageBubble(JSON.parse(event.data).from, JSON.parse(event.data).message, false);
         }
 
-        function newMessage(username, message, isOutgoing) {
+        function newMessageBubble(username, message, isOutgoing) {
             const chat = document.getElementById("messages");
             const div = document.createElement("div");
 
@@ -72,12 +111,13 @@
                 return;
             }
             if (message !== "" && username !== "") {
-                newMessage(username, message, true);
-                ws.send(JSON.stringify({username: username, message: message}));
+                newMessageBubble(username, message, true);
+                ws.send(JSON.stringify({message: message}));
             }
 
             messageInput.value = "";
         }
+
         sendButton.addEventListener("click", event => {
             sendMessage();
         })
@@ -92,21 +132,46 @@
                 sendMessage()
             }
         });
-
-        if(localStorage.getItem("username") !== null) {
-            document.getElementById("username").value = localStorage.getItem("username");
-        } else {
-            username = firstNames[Math.floor(Math.random() * firstNames.length)];
-            document.getElementById("username").value = username;
-            localStorage.setItem("username", username)
-        }
-
+                
         $('#username').keyup(() => {
-            localStorage.setItem("username", document.getElementById("username").value);
+            const username = document.getElementById("username").value;
+            if(username === "") {
+                alert("Please enter a username");
+                return;
+            }
+            
+            localStorage.setItem("username", username);
+            sendUsernameToWebsocket()
         });
+
+        $("#send-to").change(() => {
+            const username = document.getElementById("send-to").value;
+            if(username === "") {
+                alert("Please enter a username you want to send your messages to");
+                return;
+            }
+            
+            sendUpdateToToWebsocket()
+        });
+
+        $("#send-to").keypress(() => {
+            const username = document.getElementById("send-to").value;
+            
+        });
+
+
+        const sendUsernameToWebsocket = () => {
+            const username = document.getElementById("username").value;
+            console.log("Sending username to websocket: " + username)
+            ws.send(JSON.stringify({"username": username}));
+        }
+        const sendUpdateToToWebsocket = () => {
+            const to = document.getElementById("send-to").value;
+            console.log("Now talking to " + to)
+            ws.send(JSON.stringify({"to": to}));
+        }
         
-        newMessage("Demo", "Please enter your username and start chatting with your friends", false);
-        
+        newMessageBubble("Demo", "Please enter your username and start chatting with your friends", false);
 
     </script>
 </body>
