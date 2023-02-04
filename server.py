@@ -58,14 +58,14 @@ class ClientMessageHandler:
     def getOtherActiveClients(self):
         return [cl for cl in ClientMessageHandler.currentlyConnectedClients if cl.username != self.client.username and cl.websocket.open]
 
-async def chat_server(websocket, path):
+async def newConnection(websocket, path):
     messageHandler = ClientMessageHandler(websocket)
     await messageHandler.listenMessages()
 
 
 
 async def main():
-    server = await websockets.serve(chat_server, '0.0.0.0', 1234)
+    server = await websockets.serve(newConnection, '0.0.0.0', 1234)
     await server.wait_closed()
 
 if __name__ == '__main__':
